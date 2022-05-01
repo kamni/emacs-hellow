@@ -4,7 +4,7 @@
 
 ;; Author: J Leadbetter <j@jleadbetter.com>
 ;; Keywords: tutorial
-;; Version: 0.3.0
+;; Version: 0.3.1
 
 ;; The MIT License (MIT)
 
@@ -154,7 +154,11 @@
 ;;  line-by-line.                                                             ;;
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
-(defmacro hellow--construct-hello (func-name interactive-prompt input-func output-func)
+(defmacro hellow--construct-hello (func-name
+                                   docstring
+                                   interactive-prompt
+                                   input-func
+                                   output-func)
   "Construct a function that outputs \"Hello, \" plus some greeting.
 
 The INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
@@ -195,6 +199,13 @@ and then outputs the collected string via a status bar message."
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
     `(defun ,hello-funcname (&optional input-greeting-string)
+;;----------------------------------------------------------------------------;;
+;;                                                                            ;;
+;;  In order to insert a docstring here, we need to use the                   ;;
+;;  `prin1-to-string` method to escape it into a literal string.              ;;
+;;                                                                            ;;
+;;----------------------------------------------------------------------------;;
+       ,(prin1-to-string docstring)
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  Here we define what kind of interactive prompt we want to use. Typically  ;;
@@ -290,22 +301,23 @@ Only provides the greeting default (\"World\")."
 ;;----------------------------------------------------------------------------;;
 ;;;###autoload
 (hellow--construct-hello "message-default"
+                         "Display a default \"Hello, World!\" message."
                          nil
                          hellow--input-default-only
                          message)
 ;;;###autoload
 (hellow--construct-hello "message"
+                         "Display the Hello message with the config variable."
                          nil
                          hellow--input
                          message)
 
 ;;;###autoload
 (hellow--construct-hello "message-prompt"
+                         "Display the Hello message with user specified input."
                          "sHello, who?: "
                          hellow--input
                          message)
-
-;; TODO: how can I add docstrings to those ^^?
 
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
