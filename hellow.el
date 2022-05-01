@@ -1,10 +1,11 @@
-;;; hellow.el --- a Hello, World! example            -*- lexical-binding: t; -*-
-
-;; Copyright (C) 2022 J Leadbetter
+;;; hellow.el --- A Hello, World! example            -*- lexical-binding: t; -*-
 
 ;; Author: J Leadbetter <j@jleadbetter.com>
-;; Keywords: tutorial
-;; Version: 0.3.1
+;; Package-Requires: ((emacs "24.3"))
+;; Homepage: https://github.com/kamni/emacs-hellow
+;; Version: 0.4.0
+
+;; Copyright (C) 2022 J Leadbetter
 
 ;; The MIT License (MIT)
 
@@ -126,9 +127,6 @@
 (defvar hellow--greeting-default "World"
   "Fall back to the traditional greeting.")
 
-(defvar hellow--greeting-base "Hello, %s!"
-  "Format string to say hello.")
-
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  The following are elisp macros.                                           ;;
@@ -154,18 +152,19 @@
 ;;  line-by-line.                                                             ;;
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
-(defmacro hellow--construct-hello (func-name
-                                   docstring
-                                   interactive-prompt
-                                   input-func
-                                   output-func)
+(defmacro hellow--construct-hello-func (func-name
+                                        docstring
+                                        interactive-prompt
+                                        input-func
+                                        output-func)
   "Construct a function that outputs \"Hello, \" plus some greeting.
 
-The INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
+FUNC-NAME is what to call the function ('hellow' will be added in the macro)
+DOCSTRING is a docstring explaining the function
+INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
 no prompt is desired)
-The FUNC-NAME is what to call the function ('hellow' will be added in the macro)
-The INPUT-FUNC returns a string (e.g. World)
-The OUTPUT-FUNC displays it in some way (e.g., via popup or message).
+INPUT-FUNC returns a string (e.g. World)
+OUTPUT-FUNC displays it in some way (e.g., via popup or message).
 
 Example:
     (hellow--construct-hello \"foo\" \"sPrompt: \" hello--input message)
@@ -237,7 +236,7 @@ and then outputs the collected string via a status bar message."
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
        (let* ((greeting-string (,input-func input-greeting-string))
-              (greeting (format hellow--greeting-base greeting-string)))
+              (greeting (format "Hello, %s!" greeting-string)))
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  Use the `output-func` to display the greeting                             ;;
@@ -300,25 +299,84 @@ Only provides the greeting default (\"World\")."
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
 ;;;###autoload
-(hellow--construct-hello "message-default"
+(hellow--construct-hello-func "message-default"
                          "Display a default \"Hello, World!\" message."
                          nil
                          hellow--input-default-only
                          message)
 ;;;###autoload
-(hellow--construct-hello "message"
+(hellow--construct-hello-func "message"
                          "Display the Hello message with the config variable."
                          nil
                          hellow--input
                          message)
 
 ;;;###autoload
-(hellow--construct-hello "message-prompt"
+(hellow--construct-hello-func "message-prompt"
                          "Display the Hello message with user specified input."
                          "sHello, who?: "
                          hellow--input
                          message)
 
+(defmacro hellow-bouquet (func-name num-flowers flower)
+  "Something FUNC-NAME NUM-FLOWERS FLOWER."
+  `(defun ,(intern func-name) ()
+     (message (format "Bouquet of %d %s" ,num-flowers ,flower))))
+
+(defmacro hellow-bouquets (flower-defs)
+  "Something, something FLOWER-DEFS."
+  (macroexp-progn
+   (mapcar (lambda (flower-def)
+             `(hellow-bouquet ,@flower-def))
+           flower-defs)))
+
+(hellow-bouquets (("rose-basket" 10 "roses")
+                  ("violet-bunch" 20 "violets")))
+
+(defvar hellow--input-func-defs
+  '((name "-default"
+          doc "the default \"Hello, World\""
+          prompt nil
+          input-func #'hellow--input-default-only)
+    (name ""
+          doc "the configured variable"
+          prompt nil
+          input-func #'hellow--input)
+    (name "-prompt"
+          doc "the specified user input"
+          prompt "sHello, who?: "
+          input-func #'hellow--input))
+  "Defines functions for the input of \"Hello, World!\".")
+
+(defvar hellow--output-func-defs
+  '((name "foo-message"
+          doc "message"
+          output-func 'message))
+  "Defines functions for the output side of \"Hello, World!\".")
+
+(defmacro hellow--construct-hello (_foo)
+  "TODO: Something, something OUTPUT-FUNC-DEFS."
+  (macroexp-progn
+   (dolist (output-func-def hellow--output-func-defs)
+     (let ((output-func (plist-get output-func-def 'output-func))
+           (output-name-base (plist-get output-func-def 'name))
+           (output-doc-base (plist-get output-func-def 'doc)))
+       (dolist (input-func-def hellow--input-func-defs)
+         (let* ((input-func (plist-get input-func-def 'input-func))
+                (input-name-base (plist-get input-func-def 'name))
+                (input-doc-base (plist-get input-func-def 'doc))
+                (prompt (plist-get input-func-def 'prompt))
+                (func-name (format "hellow-%s%s" output-name-base input-name-base))
+                (docstring (format "Display the Hello %s using %s."
+                                   output-doc-base
+                                   input-doc-base)))
+           `(hellow--construct-hello-func ,func-name
+                                          ,docstring
+                                          ,prompt
+                                          ,input-func
+                                          ,output-func)))))))
+
+(hellow--construct-hello 1)
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  Your file should always end with `(provide '<package-name>)` and a        ;;
