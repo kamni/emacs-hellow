@@ -4,7 +4,7 @@
 
 ;; Author: J Leadbetter <j@jleadbetter.com>
 ;; Keywords: tutorial
-;; Version: 0.1.0
+;; Version: 0.1.1
 
 ;; The MIT License (MIT)
 
@@ -38,6 +38,8 @@
 ;;                                                                            ;;
 ;;  2. Allows the user to change "World" to any other variable, either via a  ;;
 ;;     config variable or via a command prompt.                               ;;
+;;                                                                            ;;
+;;  3. Define a `hellow-mode` with keybindings for launching the commands.    ;;
 ;;                                                                            ;;
 ;;  This is written with a lot of obvious notes about what is going on, to    ;;
 ;;  help a person new to programming in Elisp and making Emacs packages.      ;;
@@ -105,10 +107,16 @@
 ;;          :init (setq hellow-greeting-string "Jay"))                        ;;
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
-(defcustom hellow-greeting-string "World"
+(defcustom hellow-greeting-string nil
   "What to print after the \"Hello\" when displaying the greeting."
   :group 'hellow
   :type 'string)
+
+(defvar hellow--greeting-default "World"
+  "Fall back to the traditional greeting.")
+
+(defvar hellow--greeting-base "Hello, %s!"
+  "Format string to say hello.")
 
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
@@ -138,7 +146,15 @@
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
   (interactive)
-  (message (concat "Hello, " hellow-greeting-string "!")))
+  (let ((greeting-string (or hellow-greeting-string
+                             hellow--greeting-default)))
+    (message (format hellow--greeting-base greeting-string))))
+
+;;;###autoload
+(defun hellow-message-default ()
+  "Outputs the traditional greeting, even if it has been overridden."
+  (interactive)
+  (message (format hellow--greeting-base hellow--greeting-default)))
 
 (provide 'hellow)
 ;;; hellow.el ends here
