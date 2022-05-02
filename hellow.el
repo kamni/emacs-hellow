@@ -333,6 +333,34 @@ Only provides the greeting default (\"World\")."
 (hellow-bouquets (("rose-basket" 10 "roses")
                   ("violet-bunch" 20 "violets")))
 
+(defmacro hellow--all-hellos ()
+  "TODO: Something, something."
+  (let ((input-params '((name ""
+                              docs "the variable from the user's config"
+                              prompt nil
+                              input-func hellow--input)))
+        (output-params '((name "test"
+                               docs "message"
+                               output-func message))))
+    (macroexp-progn
+     (dolist (input input-params)
+       (dolist (output output-params)
+         (let ((func-name (format "%s%s"
+                                  (plist-get output 'name)
+                                  (plist-get input 'name)))
+               (docs (list (plist-get output 'docs)
+                           (plist-get input 'docs)))
+               (prompt (plist-get input 'prompt))
+               (input-func (plist-get input 'input-func))
+               (output-func (plist-get output 'output-func)))
+           `(hellow--construct-hello-func ,func-name
+                                          ,docs
+                                          ,prompt
+                                          ,input-func
+                                          ,output-func)))))))
+
+(hellow--all-hellos)
+
 (defvar hellow--input-func-defs
   '((name "-default"
           doc "the default \"Hello, World\""
