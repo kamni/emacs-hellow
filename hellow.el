@@ -9,7 +9,7 @@
 ;; Author: J Leadbetter <j@jleadbetter.com>
 ;; Package-Requires: ((emacs "24.1"))
 ;; Homepage: https://github.com/kamni/emacs-hellow
-;; Version: 0.4.0
+;; Version: 0.5.0
 
 ;; Copyright (C) 2022 J Leadbetter
 
@@ -141,6 +141,9 @@
 
 (defvar hellow--buffer-name "*Hellow*"
   "Name of the buffer to use for displaying hello.")
+
+(defvar hellow--previous-buffer nil
+  "Keeps track of previous buffer for closing/hiding Hellow buffer.")
 
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
@@ -302,8 +305,15 @@ and then outputs the collected string via a status bar message."
 Only provides the greeting default (\"World\")."
   hellow--greeting-default)
 
+(defun hellow--set-previous-buffer ()
+  "Keep track of the previous buffer so we can return to it."
+  (let ((prev-buff (current-buffer)))
+    (when (not (equal (buffer-name prev-buff) hellow--buffer-name))
+      (setq hellow--previous-buffer prev-buff))))
+
 (defun hellow--output-buffer (text)
   "Open a new buffer that displays TEXT."
+  (hellow--set-previous-buffer)
   (switch-to-buffer hellow--buffer-name)
   (insert (concat text "\n")))
 
@@ -374,10 +384,34 @@ Only provides the greeting default (\"World\")."
   (delete-region (point-min) (point-max)))
 
 ;;;###autoload
+(defun hellow-buffer-hide ()
+  "Return to the previous buffer we used to launch the *Hello* buffer."
+  (interactive)
+  ;; Hide only works if we're already on the buffer
+  ;; and we know another buffer to go to
+  (when (and (equal (buffer-name (current-buffer)) hellow--buffer-name)
+             hellow--previous-buffer)
+    (switch-to-buffer hellow--previous-buffer)))
+
+;;;###autoload
+(defun hellow-buffer-open ()
+  "Open the Hellow buffer without adding any output."
+  (interactive)
+  (hellow--set-previous-buffer)
+  (switch-to-buffer hellow--buffer-name))
+
+;;;###autoload
 (defun hellow-buffer-quit ()
   "Close the *Hellow* buffer."
   (interactive)
-  (kill-buffer (get-buffer hellow--buffer-name)))
+  ;; Only call kill-buffer if the *Hello* buffer exists;
+  ;; otherwise it kills the current buffer.
+  (let ((buf (get-buffer hellow--buffer-name)))
+    (when buf
+      (kill-buffer buf)))
+  (when hellow--previous-buffer
+    (switch-to-buffer hellow--previous-buffer))
+  (setq hellow--previous-buffer nil))
 
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
