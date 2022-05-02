@@ -1,10 +1,17 @@
-;;; hellow.el --- a Hello, World! example            -*- lexical-binding: t; -*-
+;;; hellow.el --- A Hello, World! example            -*- lexical-binding: t; -*-
+
+;;----------------------------------------------------------------------------;;
+;;                                                                            ;;
+;;  More information on what fields can be included here can be found:        ;;
+;;  https://www.gnu.org/software/emacs/manual/html_node/elisp/Library-Headers.html
+;;                                                                            ;;
+;;----------------------------------------------------------------------------;;
+;; Author: J Leadbetter <j@jleadbetter.com>
+;; Package-Requires: ((emacs "24.1"))
+;; Homepage: https://github.com/kamni/emacs-hellow
+;; Version: 0.3.2
 
 ;; Copyright (C) 2022 J Leadbetter
-
-;; Author: J Leadbetter <j@jleadbetter.com>
-;; Keywords: tutorial
-;; Version: 0.3.1
 
 ;; The MIT License (MIT)
 
@@ -129,6 +136,9 @@
 (defvar hellow--greeting-base "Hello, %s!"
   "Format string to say hello.")
 
+(defvar hellow--docstring-base "Displays a Hello %s using %s."
+  "Format string for function docstrings.")
+
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  The following are elisp macros.                                           ;;
@@ -161,11 +171,12 @@
                                    output-func)
   "Construct a function that outputs \"Hello, \" plus some greeting.
 
-The INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
+FUNC-NAME is what to call the function ('hellow' will be added in the macro)
+DOCSTRING is a docstring you want the function to have.
+INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
 no prompt is desired)
-The FUNC-NAME is what to call the function ('hellow' will be added in the macro)
-The INPUT-FUNC returns a string (e.g. World)
-The OUTPUT-FUNC displays it in some way (e.g., via popup or message).
+INPUT-FUNC returns a string (e.g. World)
+OUTPUT-FUNC displays it in some way (e.g., via popup or message).
 
 Example:
     (hellow--construct-hello \"foo\" \"sPrompt: \" hello--input message)
@@ -201,11 +212,10 @@ and then outputs the collected string via a status bar message."
     `(defun ,hello-funcname (&optional input-greeting-string)
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
-;;  In order to insert a docstring here, we need to use the                   ;;
-;;  `prin1-to-string` method to escape it into a literal string.              ;;
+;;  Adding a docstring. You can check it out using `C-h f`.                   ;;
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
-       ,(prin1-to-string docstring)
+       ,(format hellow--docstring-base func-name docstring)
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  Here we define what kind of interactive prompt we want to use. Typically  ;;
@@ -301,20 +311,20 @@ Only provides the greeting default (\"World\")."
 ;;----------------------------------------------------------------------------;;
 ;;;###autoload
 (hellow--construct-hello "message-default"
-                         "Display a default \"Hello, World!\" message."
+                         "the traditional \"Hello, World!\""
                          nil
                          hellow--input-default-only
                          message)
 ;;;###autoload
 (hellow--construct-hello "message"
-                         "Display the Hello message with the config variable."
+                         "the variable from the user's config"
                          nil
                          hellow--input
                          message)
 
 ;;;###autoload
 (hellow--construct-hello "message-prompt"
-                         "Display the Hello message with user specified input."
+                         "input from a prompt"
                          "sHello, who?: "
                          hellow--input
                          message)
