@@ -9,7 +9,7 @@
 ;; Author: J Leadbetter <j@jleadbetter.com>
 ;; Package-Requires: ((emacs "24.1"))
 ;; Homepage: https://github.com/kamni/emacs-hellow
-;; Version: 0.3.2
+;; Version: 0.4.0
 
 ;; Copyright (C) 2022 J Leadbetter
 
@@ -139,6 +139,9 @@
 (defvar hellow--docstring-base "Displays a Hello %s using %s."
   "Format string for function docstrings.")
 
+(defvar hellow--buffer-name "*Hellow*"
+  "Name of the buffer to use for displaying hello.")
+
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  The following are elisp macros.                                           ;;
@@ -172,7 +175,7 @@
   "Construct a function that outputs \"Hello, \" plus some greeting.
 
 FUNC-NAME is what to call the function ('hellow' will be added in the macro)
-DOCSTRING is a docstring you want the function to have.
+DOCSTRING is a list of (output-type input-type) to insert into the docstring
 INTERACTIVE-PROMPT is a string to prompt the user for input (can be nil if
 no prompt is desired)
 INPUT-FUNC returns a string (e.g. World)
@@ -215,7 +218,9 @@ and then outputs the collected string via a status bar message."
 ;;  Adding a docstring. You can check it out using `C-h f`.                   ;;
 ;;                                                                            ;;
 ;;----------------------------------------------------------------------------;;
-       ,(format hellow--docstring-base func-name docstring)
+       ,(apply (lambda (output-type input-type)
+                 (format hellow--docstring-base output-type input-type))
+               docstring)
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  Here we define what kind of interactive prompt we want to use. Typically  ;;
@@ -297,6 +302,11 @@ and then outputs the collected string via a status bar message."
 Only provides the greeting default (\"World\")."
   hellow--greeting-default)
 
+(defun hellow--output-buffer (text)
+  "Open a new buffer that displays TEXT."
+  (switch-to-buffer hellow--buffer-name)
+  (insert (concat text "\n")))
+
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
 ;;  First we're going to create a function to output a basic "Hello, World!"  ;;
@@ -311,23 +321,63 @@ Only provides the greeting default (\"World\")."
 ;;----------------------------------------------------------------------------;;
 ;;;###autoload
 (hellow--construct-hello "message-default"
-                         "the traditional \"Hello, World!\""
+                         ("message" "the traditional \"Hello, World!\"")
                          nil
                          hellow--input-default-only
                          message)
 ;;;###autoload
 (hellow--construct-hello "message"
-                         "the variable from the user's config"
+                         ("message" "the variable from the user's config")
                          nil
                          hellow--input
                          message)
 
 ;;;###autoload
 (hellow--construct-hello "message-prompt"
-                         "input from a prompt"
+                         ("message" "input from a prompt")
                          "sHello, who?: "
                          hellow--input
                          message)
+
+;;;###autoload
+(hellow--construct-hello "buffer-default"
+                         ("buffer" "the traditional \"Hello, World!\"")
+                         nil
+                         hellow--input-default-only
+                         hellow--output-buffer)
+
+;;;###autoload
+(hellow--construct-hello "buffer"
+                         ("buffer" "the variable from the user's config")
+                         nil
+                         hellow--input
+                         hellow--output-buffer)
+
+;;;###autoload
+(hellow--construct-hello "buffer-prompt"
+                         ("buffer" "input from a prompt")
+                         "sHello, who?: "
+                         hellow--input
+                         hellow--output-buffer)
+
+;;----------------------------------------------------------------------------;;
+;;                                                                            ;;
+;;  A few functions to help us manage the buffers.                            ;;
+;;                                                                            ;;
+;;----------------------------------------------------------------------------;;
+
+;;;###autoload
+(defun hellow-buffer-clear ()
+  "Clear the *Hellow* buffer."
+  (interactive)
+  (switch-to-buffer hellow--buffer-name)
+  (delete-region (point-min) (point-max)))
+
+;;;###autoload
+(defun hellow-buffer-quit ()
+  "Close the *Hellow* buffer."
+  (interactive)
+  (kill-buffer (get-buffer hellow--buffer-name)))
 
 ;;----------------------------------------------------------------------------;;
 ;;                                                                            ;;
